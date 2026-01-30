@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { spawn } from "node:child_process";
 import { parseProject } from "../../parser/parse.js";
@@ -78,22 +79,31 @@ export async function renderCommand(
   // Concurrency
   args.push("--concurrency", options.concurrency);
 
-  // Pass project data as props
-  const projectJson = JSON.stringify({ project });
-  args.push("--props", projectJson);
+  // Write project data to temp file to avoid shell escaping issues
+  const propsFile = path.join(os.tmpdir(), `remotion-props-${Date.now()}.json`);
+  fs.writeFileSync(propsFile, JSON.stringify({ project }));
+  args.push("--props", propsFile);
 
   // Mute audio (overlays don't have audio)
   args.push("--muted");
 
   console.log(`\n🎬 Starting render...`);
 
-  // Execute render
+  // Execute render without shell to avoid escaping issues
   const remotion = spawn("npx", args, {
     stdio: "inherit",
-    shell: true,
   });
 
+  const cleanup = () => {
+    try {
+      fs.unlinkSync(propsFile);
+    } catch {
+      // Ignore cleanup errors
+    }
+  };
+
   remotion.on("close", (code) => {
+    cleanup();
     if (code === 0) {
       console.log(`\n✅ Render complete: ${outputPath}`);
     } else {
@@ -103,6 +113,7 @@ export async function renderCommand(
   });
 
   remotion.on("error", (err) => {
+    cleanup();
     console.error("Failed to start render:", err.message);
     process.exit(1);
   });

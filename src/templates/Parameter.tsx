@@ -9,12 +9,14 @@ export interface ParameterProps {
   overlay: ParsedParameterOverlay;
   theme: Theme;
   defaultTransition?: ParsedTransition;
+  defaultStyle?: Record<string, string | number>;
 }
 
 export const Parameter: React.FC<ParameterProps> = ({
   overlay,
   theme,
   defaultTransition,
+  defaultStyle,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -85,6 +87,8 @@ export const Parameter: React.FC<ParameterProps> = ({
     fontSize: overlay.fontSize ?? 36,
     fontWeight: 600,
     color: overlay.color ?? theme.text,
+    ...(defaultStyle as React.CSSProperties),
+    ...(overlay.style as React.CSSProperties),
   };
 
   const unitStyle: React.CSSProperties = {

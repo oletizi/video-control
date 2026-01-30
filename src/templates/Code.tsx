@@ -16,9 +16,10 @@ export interface CodeProps {
   overlay: ParsedCodeOverlay;
   theme: Theme;
   defaultTransition?: ParsedTransition;
+  defaultStyle?: Record<string, string | number>;
 }
 
-export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition }) => {
+export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, defaultStyle }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const [html, setHtml] = useState<string | null>(null);
@@ -85,6 +86,8 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition })
     padding: "24px 32px",
     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
     overflow: "hidden",
+    ...(defaultStyle as React.CSSProperties),
+    ...(overlay.style as React.CSSProperties),
   };
 
   return (

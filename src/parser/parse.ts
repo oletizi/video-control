@@ -80,6 +80,7 @@ export interface ParsedProject {
   defaults: {
     font: string;
     transition?: ParsedTransition;
+    style?: Record<string, string | number>;
   };
   theme: {
     primary: string;
@@ -166,6 +167,7 @@ export function parseProject(content: string): ParsedProject {
   const defaults = {
     font: project.defaults?.font ?? "Inter",
     transition: defaultTransition,
+    style: project.defaults?.style,
   };
 
   const theme = {

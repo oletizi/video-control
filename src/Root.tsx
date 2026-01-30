@@ -68,8 +68,12 @@ const sampleProject: ParsedProject = {
   ],
 };
 
+interface CompositionProps {
+  project: ParsedProject;
+}
+
 // Wrapper component that accepts props as 'any' to satisfy Remotion
-const OverlayWrapper: React.FC<{ project: ParsedProject }> = (props) => {
+const OverlayWrapper: React.FC<CompositionProps> = (props) => {
   return <OverlayComposition project={props.project} />;
 };
 
@@ -85,6 +89,15 @@ export const RemotionRoot: React.FC = () => {
         width={sampleProject.project.width}
         height={sampleProject.project.height}
         defaultProps={{ project: sampleProject }}
+        calculateMetadata={({ props }) => {
+          const { project } = props as CompositionProps;
+          return {
+            durationInFrames: project.project.durationInFrames,
+            fps: project.project.fps,
+            width: project.project.width,
+            height: project.project.height,
+          };
+        }}
       />
     </>
   );

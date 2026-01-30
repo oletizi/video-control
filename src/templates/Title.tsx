@@ -9,9 +9,10 @@ export interface TitleProps {
   overlay: ParsedTitleOverlay;
   theme: Theme;
   defaultTransition?: ParsedTransition;
+  defaultStyle?: Record<string, string | number>;
 }
 
-export const Title: React.FC<TitleProps> = ({ overlay, theme, defaultTransition }) => {
+export const Title: React.FC<TitleProps> = ({ overlay, theme, defaultTransition, defaultStyle }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -66,6 +67,8 @@ export const Title: React.FC<TitleProps> = ({ overlay, theme, defaultTransition 
     textAlign: "center",
     lineHeight: 1.1,
     textShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+    ...(defaultStyle as React.CSSProperties),
+    ...(overlay.style as React.CSSProperties),
   };
 
   const subtitleStyle: React.CSSProperties = {

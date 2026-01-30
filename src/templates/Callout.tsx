@@ -9,9 +9,10 @@ export interface CalloutProps {
   overlay: ParsedCalloutOverlay;
   theme: Theme;
   defaultTransition?: ParsedTransition;
+  defaultStyle?: Record<string, string | number>;
 }
 
-export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransition }) => {
+export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransition, defaultStyle }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -80,6 +81,8 @@ export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransit
     borderRadius: 6,
     boxShadow: "0 2px 10px rgba(0, 0, 0, 0.3)",
     whiteSpace: "nowrap",
+    ...(defaultStyle as React.CSSProperties),
+    ...(overlay.style as React.CSSProperties),
   };
 
   // Calculate arrow path if needed

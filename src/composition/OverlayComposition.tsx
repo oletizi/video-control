@@ -28,6 +28,7 @@ export const OverlayComposition: React.FC<OverlayCompositionProps> = ({ project 
           overlay={overlay}
           theme={theme}
           defaultTransition={defaults.transition}
+          defaultStyle={defaults.style}
         />
       ))}
     </AbsoluteFill>
@@ -38,12 +39,14 @@ interface OverlayRendererProps {
   overlay: ParsedOverlay;
   theme: Theme;
   defaultTransition?: ParsedTransition;
+  defaultStyle?: Record<string, string | number>;
 }
 
 const OverlayRenderer: React.FC<OverlayRendererProps> = ({
   overlay,
   theme,
   defaultTransition,
+  defaultStyle,
 }) => {
   switch (overlay.type) {
     case "title":
@@ -52,6 +55,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
           overlay={overlay as ParsedTitleOverlay}
           theme={theme}
           defaultTransition={defaultTransition}
+          defaultStyle={defaultStyle}
         />
       );
 
@@ -61,6 +65,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
           overlay={overlay as ParsedLowerThirdOverlay}
           theme={theme}
           defaultTransition={defaultTransition}
+          defaultStyle={defaultStyle}
         />
       );
 
@@ -70,6 +75,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
           overlay={overlay as ParsedCalloutOverlay}
           theme={theme}
           defaultTransition={defaultTransition}
+          defaultStyle={defaultStyle}
         />
       );
 
@@ -79,6 +85,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
           overlay={overlay as ParsedCodeOverlay}
           theme={theme}
           defaultTransition={defaultTransition}
+          defaultStyle={defaultStyle}
         />
       );
 
@@ -88,6 +95,7 @@ const OverlayRenderer: React.FC<OverlayRendererProps> = ({
           overlay={overlay as ParsedParameterOverlay}
           theme={theme}
           defaultTransition={defaultTransition}
+          defaultStyle={defaultStyle}
         />
       );
 

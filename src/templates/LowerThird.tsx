@@ -9,12 +9,14 @@ export interface LowerThirdProps {
   overlay: ParsedLowerThirdOverlay;
   theme: Theme;
   defaultTransition?: ParsedTransition;
+  defaultStyle?: Record<string, string | number>;
 }
 
 export const LowerThird: React.FC<LowerThirdProps> = ({
   overlay,
   theme,
   defaultTransition,
+  defaultStyle,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -91,6 +93,8 @@ export const LowerThird: React.FC<LowerThirdProps> = ({
     fontWeight: 600,
     color: overlay.color ?? theme.text,
     lineHeight: 1.2,
+    ...(defaultStyle as React.CSSProperties),
+    ...(overlay.style as React.CSSProperties),
   };
 
   const subtitleStyle: React.CSSProperties = {

@@ -46,6 +46,11 @@ const TransitionSchema = z.object({
 });
 
 /**
+ * Arbitrary CSS properties (camelCase keys, string/number values)
+ */
+const StyleSchema = z.record(z.string(), z.union([z.string(), z.number()]));
+
+/**
  * Base overlay properties shared by all types
  */
 const BaseOverlaySchema = z.object({
@@ -59,6 +64,7 @@ const BaseOverlaySchema = z.object({
   fontSize: z.number().optional(),
   color: z.string().optional(),
   backgroundColor: z.string().optional(),
+  style: StyleSchema.optional(),
 });
 
 /**
@@ -128,11 +134,12 @@ const ThemeSchema = z.object({
 });
 
 /**
- * Default transition configuration
+ * Default configuration
  */
 const DefaultsSchema = z.object({
   font: z.string().optional().default("Inter"),
   transition: TransitionSchema.optional(),
+  style: StyleSchema.optional(),
 });
 
 /**

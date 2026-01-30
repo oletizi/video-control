@@ -19,6 +19,9 @@ defaults:
   transition:
     type: fade
     duration: 0.25
+  # Default styles applied to all overlays (can be overridden per-overlay)
+  style:
+    textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)"
 
 # Color theme
 theme:
@@ -40,6 +43,10 @@ overlays:
       in: fade
       out: fade
       duration: 0.5
+    # Custom CSS styles (camelCase property names)
+    style:
+      fontWeight: 900
+      letterSpacing: "0.05em"
 
   # Lower-third - slides up from bottom
   - id: presenter

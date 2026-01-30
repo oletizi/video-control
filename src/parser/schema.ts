@@ -51,11 +51,24 @@ const TransitionSchema = z.object({
 const StyleSchema = z.record(z.string(), z.union([z.string(), z.number()]));
 
 /**
+ * Section within a multi-section overlay
+ * Inherits in/out/transition from parent if not specified
+ */
+const SectionSchema = z.object({
+  text: z.string(),
+  in: TimecodeSchema.optional(),
+  out: TimecodeSchema.optional(),
+  transition: TransitionSchema.optional(),
+  style: StyleSchema.optional(),
+});
+
+/**
  * Base overlay properties shared by all types
  */
 const BaseOverlaySchema = z.object({
   id: z.string().optional(),
-  text: z.string(),
+  title: z.string().optional(),
+  text: z.string().optional(),
   in: TimecodeSchema,
   out: TimecodeSchema,
   position: PositionSchema.optional(),
@@ -65,6 +78,7 @@ const BaseOverlaySchema = z.object({
   color: z.string().optional(),
   backgroundColor: z.string().optional(),
   style: StyleSchema.optional(),
+  sections: z.array(SectionSchema).optional(),
 });
 
 /**
@@ -170,6 +184,7 @@ export type PixelPosition = z.infer<typeof PixelPositionSchema>;
 export type TransitionType = z.infer<typeof TransitionTypeSchema>;
 export type Transition = z.infer<typeof TransitionSchema>;
 export type Overlay = z.infer<typeof OverlaySchema>;
+export type Section = z.infer<typeof SectionSchema>;
 export type TitleOverlay = z.infer<typeof TitleOverlaySchema>;
 export type LowerThirdOverlay = z.infer<typeof LowerThirdOverlaySchema>;
 export type CalloutOverlay = z.infer<typeof CalloutOverlaySchema>;

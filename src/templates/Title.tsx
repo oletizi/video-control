@@ -20,6 +20,8 @@ export const Title: React.FC<TitleProps> = ({ overlay, theme, defaultTransition,
   const transitionOut = overlay.transition?.out ?? defaultTransition?.out ?? "fade";
   const transitionFrames = overlay.transitionInFrames;
 
+  const mainText = overlay.title ?? overlay.text ?? "";
+
   const state = getTransitionState({
     frame,
     startFrame: overlay.inFrame,
@@ -27,7 +29,7 @@ export const Title: React.FC<TitleProps> = ({ overlay, theme, defaultTransition,
     transitionFrames,
     transitionIn,
     transitionOut,
-    text: overlay.text,
+    text: mainText,
     fps,
   });
 
@@ -43,11 +45,11 @@ export const Title: React.FC<TitleProps> = ({ overlay, theme, defaultTransition,
     transitionFrames,
     transitionIn,
     transitionOut,
-    text: overlay.text,
+    text: mainText,
     fps,
   });
 
-  const displayText = typewriter ? typewriter.text : overlay.text;
+  const displayText = typewriter ? typewriter.text : mainText;
   const displaySubtitle = overlay.subtitle;
 
   const containerStyle: React.CSSProperties = {

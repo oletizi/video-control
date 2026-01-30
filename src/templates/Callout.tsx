@@ -20,6 +20,8 @@ export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransit
   const transitionOut = overlay.transition?.out ?? defaultTransition?.out ?? "fade";
   const transitionFrames = overlay.transitionInFrames;
 
+  const mainText = overlay.title ?? overlay.text ?? "";
+
   const state = getTransitionState({
     frame,
     startFrame: overlay.inFrame,
@@ -27,7 +29,7 @@ export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransit
     transitionFrames,
     transitionIn,
     transitionOut,
-    text: overlay.text,
+    text: mainText,
     fps,
   });
 
@@ -43,11 +45,11 @@ export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransit
     transitionFrames,
     transitionIn,
     transitionOut,
-    text: overlay.text,
+    text: mainText,
     fps,
   });
 
-  const displayText = typewriter ? typewriter.text : overlay.text;
+  const displayText = typewriter ? typewriter.text : mainText;
 
   // Get position (must be pixel coordinates for callout)
   const position = overlay.position;

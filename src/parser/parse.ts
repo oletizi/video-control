@@ -9,8 +9,22 @@ import {
   type CodeOverlay,
   type ParameterOverlay,
   type TransitionType,
+  type Section,
 } from "@/parser/schema";
 import { parseTimecode, parseDuration, calculateDurationFromOverlays } from "@/utils/timing";
+
+/**
+ * Parsed section with frame-based timing
+ */
+export interface ParsedSection {
+  text: string;
+  inFrame: number;
+  outFrame: number;
+  durationInFrames: number;
+  transitionInFrames: number;
+  transition?: ParsedTransition;
+  style?: Record<string, string | number>;
+}
 
 /**
  * Base parsed overlay fields
@@ -20,32 +34,33 @@ interface ParsedOverlayBase {
   outFrame: number;
   durationInFrames: number;
   transitionInFrames: number;
+  sections?: ParsedSection[];
 }
 
 /**
  * Parsed title overlay
  */
-export type ParsedTitleOverlay = Omit<TitleOverlay, "in" | "out"> & ParsedOverlayBase;
+export type ParsedTitleOverlay = Omit<TitleOverlay, "in" | "out" | "sections"> & ParsedOverlayBase;
 
 /**
  * Parsed lower-third overlay
  */
-export type ParsedLowerThirdOverlay = Omit<LowerThirdOverlay, "in" | "out"> & ParsedOverlayBase;
+export type ParsedLowerThirdOverlay = Omit<LowerThirdOverlay, "in" | "out" | "sections"> & ParsedOverlayBase;
 
 /**
  * Parsed callout overlay
  */
-export type ParsedCalloutOverlay = Omit<CalloutOverlay, "in" | "out"> & ParsedOverlayBase;
+export type ParsedCalloutOverlay = Omit<CalloutOverlay, "in" | "out" | "sections"> & ParsedOverlayBase;
 
 /**
  * Parsed code overlay
  */
-export type ParsedCodeOverlay = Omit<CodeOverlay, "in" | "out"> & ParsedOverlayBase;
+export type ParsedCodeOverlay = Omit<CodeOverlay, "in" | "out" | "sections"> & ParsedOverlayBase;
 
 /**
  * Parsed parameter overlay
  */
-export type ParsedParameterOverlay = Omit<ParameterOverlay, "in" | "out"> & ParsedOverlayBase;
+export type ParsedParameterOverlay = Omit<ParameterOverlay, "in" | "out" | "sections"> & ParsedOverlayBase;
 
 /**
  * Union of all parsed overlay types
@@ -112,7 +127,29 @@ export class ParseError extends Error {
 function formatZodError(error: ZodError): string {
   const messages = error.errors.map((err) => {
     const path = err.path.join(".");
-    return `  - ${path}: ${err.message}`;
+    let message = err.message;
+
+    // Provide more helpful messages for common error types
+    if (err.code === "invalid_union") {
+      message = "Expected a timecode string (e.g., \"0:30.000\", \"45.5\") or frame number";
+    } else if (err.code === "invalid_type") {
+      if (err.expected === "string") {
+        message = `Expected a string, got ${err.received}`;
+      } else if (err.expected === "number") {
+        message = `Expected a number, got ${err.received}`;
+      } else if (err.received === "undefined") {
+        message = `Required field is missing`;
+      } else {
+        message = `Expected ${err.expected}, got ${err.received}`;
+      }
+    } else if (err.code === "invalid_literal") {
+      message = `Expected "${err.expected}", got "${err.received}"`;
+    } else if (err.code === "invalid_enum_value") {
+      const options = (err as { options?: string[] }).options?.join(", ") ?? "unknown";
+      message = `Invalid value. Expected one of: ${options}`;
+    }
+
+    return `  - ${path}: ${message}`;
   });
   return `Validation errors:\n${messages.join("\n")}`;
 }
@@ -199,9 +236,47 @@ export function parseProject(content: string): ParsedProject {
       );
     }
 
+    // Process sections with inheritance from parent
+    const parsedSections: ParsedSection[] | undefined = overlay.sections?.map(
+      (section: Section) => {
+        // Inherit in/out from parent if not specified
+        const sectionInFrame = section.in !== undefined
+          ? parseTimecode(section.in, fps)
+          : inFrame;
+        const sectionOutFrame = section.out !== undefined
+          ? parseTimecode(section.out, fps)
+          : outFrame;
+        const sectionDuration = sectionOutFrame - sectionInFrame;
+
+        // Inherit transition from parent if not specified
+        const sectionTransition = section.transition ?? overlay.transition;
+        const sectionTransitionDuration =
+          sectionTransition?.duration ?? defaults.transition?.duration ?? 0.25;
+        const sectionTransitionInFrames = Math.round(sectionTransitionDuration * fps);
+
+        const parsedTransition: ParsedTransition | undefined = sectionTransition
+          ? {
+              in: sectionTransition.in as TransitionType,
+              out: sectionTransition.out as TransitionType,
+              duration: sectionTransition.duration,
+            }
+          : undefined;
+
+        return {
+          text: section.text,
+          inFrame: sectionInFrame,
+          outFrame: sectionOutFrame,
+          durationInFrames: sectionDuration,
+          transitionInFrames: sectionTransitionInFrames,
+          transition: parsedTransition,
+          style: section.style,
+        };
+      }
+    );
+
     // Destructure to remove in/out and add frame-based timing
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { in: _in, out: _out, ...rest } = overlay;
+    const { in: _in, out: _out, sections: _sections, ...rest } = overlay;
 
     return {
       ...rest,
@@ -209,6 +284,7 @@ export function parseProject(content: string): ParsedProject {
       outFrame,
       durationInFrames: overlayDuration,
       transitionInFrames,
+      sections: parsedSections,
     } as ParsedOverlay;
   });
 

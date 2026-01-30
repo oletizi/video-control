@@ -6,6 +6,8 @@ Generate professional text overlay videos from YAML definitions. Export as ProRe
 
 - **5 overlay templates**: Title, Lower-Third, Callout, Code, Parameter
 - **7 transition types**: cut, fade, slide-up/down/left/right, typewriter
+- **Multi-section overlays**: Independent timing for each line
+- **Custom CSS styles**: Apply any CSS property to overlays
 - **YAML-based workflow**: Define overlays in human-readable format
 - **ProRes 4444 output**: Full alpha channel support for compositing
 - **CLI tools**: render, validate, templates, init commands
@@ -36,13 +38,17 @@ project:
   name: "My Video Overlays"
   resolution: [1920, 1080]
   framerate: 30
-  duration: "1:00"
+  # duration is optional - calculated from overlay timings if not specified
 
 defaults:
   font: "Inter"
   transition:
-    type: fade
+    in: fade
+    out: fade
     duration: 0.25
+  # Default styles applied to all overlays
+  style:
+    textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)"
 
 theme:
   primary: "#3B82F6"
@@ -55,6 +61,9 @@ overlays:
     text: "Welcome"
     in: "0:01.000"
     out: "0:05.000"
+    style:
+      fontWeight: 900
+      letterSpacing: "0.05em"
 
   - type: lower-third
     text: "Speaker Name"
@@ -112,6 +121,8 @@ Centered title text with optional subtitle.
 - type: title
   text: "Main Title"
   subtitle: "Optional subtitle"
+  in: "0:01.000"
+  out: "0:05.000"
   fontSize: 120
   transition:
     in: fade
@@ -126,6 +137,8 @@ Name/title bar at bottom of screen.
 - type: lower-third
   text: "Speaker Name"
   subtitle: "Role or Title"
+  in: "0:06.000"
+  out: "0:12.000"
   position: bottom-left  # or bottom-right
 ```
 
@@ -135,6 +148,8 @@ Positioned label with optional arrow pointing to a target.
 ```yaml
 - type: callout
   text: "Look here!"
+  in: "0:15.000"
+  out: "0:20.000"
   position: [800, 300]
   arrow: true
   arrow_target: [600, 400]
@@ -149,6 +164,8 @@ Syntax-highlighted code block using Shiki.
     function example() {
       return "hello";
     }
+  in: "0:25.000"
+  out: "0:35.000"
   syntax: typescript
   theme: github-dark
   position: center
@@ -162,8 +179,59 @@ Key-value display for measurements or settings.
   label: "Threshold"
   value: "-18"
   unit: "dB"
+  text: "Threshold: -18 dB"
+  in: "0:40.000"
+  out: "0:50.000"
   position: [100, 100]
 ```
+
+## Multi-Section Overlays
+
+Any overlay can have multiple sections with independent timing. Each section inherits `in`, `out`, and `transition` from the parent if not specified. Use the optional `title` field for a heading above sections.
+
+```yaml
+- type: lower-third
+  title: "Speaker"      # Optional heading above sections
+  in: "0:06.000"
+  out: "0:12.000"
+  position: bottom-left
+  transition:
+    in: fade
+    out: fade
+  sections:
+    - text: "Your Name"
+      in: "0:06.000"    # Fades in first
+    - text: "Your Title"
+      in: "0:06.500"    # Fades in 0.5s later
+    - text: "Your Company"
+      in: "0:07.000"    # Fades in 1s later
+      style:
+        fontStyle: italic
+```
+
+All overlay types support an optional `title` field that can be used instead of or in addition to `text`.
+
+## Custom Styles
+
+Apply any CSS property (camelCase) to overlays or sections:
+
+```yaml
+- type: title
+  text: "Styled Title"
+  in: "0:01.000"
+  out: "0:05.000"
+  style:
+    fontWeight: 900
+    letterSpacing: "0.05em"
+    textTransform: uppercase
+    textShadow: "0 0 20px rgba(255, 0, 0, 0.8)"
+```
+
+Style inheritance order (later overrides earlier):
+1. Template defaults
+2. `defaults.style` (project-wide)
+3. `overlay.style` (per-overlay)
+4. `section.style` (per-section)
 
 ## Transitions
 

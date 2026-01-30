@@ -10,7 +10,7 @@ import { codeToHtml } from "shiki";
 import { getTransitionState } from "@/transitions";
 import type { ParsedCodeOverlay, ParsedTransition } from "@/parser/parse";
 import type { Theme } from "@/parser/schema";
-import { getPositionStyles, monoFontStyles } from "@/templates/shared";
+import { getPositionStyles, monoFontStyles, defaultFontStyles } from "@/templates/shared";
 
 export interface CodeProps {
   overlay: ParsedCodeOverlay;
@@ -29,10 +29,12 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
   const transitionOut = overlay.transition?.out ?? defaultTransition?.out ?? "fade";
   const transitionFrames = overlay.transitionInFrames;
 
+  const codeText = overlay.text ?? "";
+
   useEffect(() => {
     const loadHighlighting = async () => {
       try {
-        const highlighted = await codeToHtml(overlay.text, {
+        const highlighted = await codeToHtml(codeText, {
           lang: overlay.syntax ?? "typescript",
           theme: overlay.theme ?? "github-dark",
         });
@@ -41,13 +43,13 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
       } catch (err) {
         console.error("Syntax highlighting error:", err);
         // Fall back to plain text
-        setHtml(`<pre><code>${escapeHtml(overlay.text)}</code></pre>`);
+        setHtml(`<pre><code>${escapeHtml(codeText)}</code></pre>`);
         continueRender(handle);
       }
     };
 
     loadHighlighting();
-  }, [overlay.text, overlay.syntax, overlay.theme, handle]);
+  }, [codeText, overlay.syntax, overlay.theme, handle]);
 
   const state = getTransitionState({
     frame,
@@ -56,7 +58,7 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
     transitionFrames,
     transitionIn,
     transitionOut,
-    text: overlay.text,
+    text: codeText,
     fps,
   });
 
@@ -78,6 +80,14 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
     maxWidth: "80%",
   };
 
+  const titleStyle: React.CSSProperties = {
+    ...defaultFontStyles,
+    fontSize: (overlay.fontSize ?? 18) * 1.2,
+    fontWeight: 600,
+    color: overlay.color ?? theme.text,
+    marginBottom: 12,
+  };
+
   const codeContainerStyle: React.CSSProperties = {
     ...monoFontStyles,
     fontSize: overlay.fontSize ?? 18,
@@ -93,6 +103,7 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
   return (
     <AbsoluteFill>
       <div style={containerStyle}>
+        {overlay.title && <div style={titleStyle}>{overlay.title}</div>}
         <div
           style={codeContainerStyle}
           dangerouslySetInnerHTML={{ __html: html }}

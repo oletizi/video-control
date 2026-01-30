@@ -8,3 +8,4 @@ out
 package-lock.json
 # Ignore projects directory
 /projects/
+/.idea/

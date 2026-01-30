@@ -25,6 +25,10 @@ export const Parameter: React.FC<ParameterProps> = ({
   const transitionOut = overlay.transition?.out ?? defaultTransition?.out ?? "fade";
   const transitionFrames = overlay.transitionInFrames;
 
+  // Use title as alternative to label
+  const displayLabel = overlay.title ?? overlay.label;
+  const mainText = overlay.text ?? `${displayLabel}: ${overlay.value}${overlay.unit ?? ""}`;
+
   const state = getTransitionState({
     frame,
     startFrame: overlay.inFrame,
@@ -32,7 +36,7 @@ export const Parameter: React.FC<ParameterProps> = ({
     transitionFrames,
     transitionIn,
     transitionOut,
-    text: overlay.text,
+    text: mainText,
     fps,
   });
 
@@ -103,7 +107,7 @@ export const Parameter: React.FC<ParameterProps> = ({
     <AbsoluteFill>
       <div style={containerStyle}>
         <div style={wrapperStyle}>
-          <div style={labelStyle}>{overlay.label}</div>
+          <div style={labelStyle}>{displayLabel}</div>
           <div style={valueContainerStyle}>
             <div style={valueStyle}>{overlay.value}</div>
             {overlay.unit && <div style={unitStyle}>{overlay.unit}</div>}

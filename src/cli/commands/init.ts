@@ -47,18 +47,23 @@ overlays:
       fontWeight: 900
       letterSpacing: "0.05em"
 
-  # Lower-third - slides up from bottom
+  # Lower-third with sections - each line has independent timing
   - id: presenter
     type: lower-third
-    text: "Your Name"
-    subtitle: "Your Title"
+    title: "Speaker"  # Optional heading above sections
     in: "0:06.000"
     out: "0:12.000"
     position: bottom-left
     transition:
-      in: slide-up
-      out: slide-down
-      duration: 0.3
+      in: fade
+      out: fade
+    sections:
+      - text: "Your Name"
+        in: "0:06.000"  # Fades in first
+      - text: "Your Title"
+        in: "0:06.500"  # Fades in 0.5s later
+      - text: "Your Company"
+        in: "0:07.000"  # Fades in 1s later
 
   # Callout with arrow - points to something on screen
   - id: highlight

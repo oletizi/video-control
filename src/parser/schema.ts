@@ -149,7 +149,7 @@ const ProjectConfigSchema = z.object({
   name: z.string(),
   resolution: z.tuple([z.number(), z.number()]).default([1920, 1080]),
   framerate: z.number().default(30),
-  duration: TimecodeSchema,
+  duration: TimecodeSchema.optional(),
 });
 
 /**

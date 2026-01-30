@@ -10,7 +10,7 @@ import {
   type ParameterOverlay,
   type TransitionType,
 } from "@/parser/schema";
-import { parseTimecode, parseDuration } from "@/utils/timing";
+import { parseTimecode, parseDuration, calculateDurationFromOverlays } from "@/utils/timing";
 
 /**
  * Base parsed overlay fields
@@ -153,7 +153,6 @@ export function parseProject(content: string): ParsedProject {
 
   const fps = project.project.framerate;
   const [width, height] = project.project.resolution;
-  const durationInFrames = parseDuration(project.project.duration, fps);
 
   // Apply defaults
   const defaultTransition = project.defaults?.transition
@@ -199,11 +198,6 @@ export function parseProject(content: string): ParsedProject {
         `Overlay ${overlay.id ?? index}: "out" time must be after "in" time`
       );
     }
-    if (outFrame > durationInFrames) {
-      throw new ParseError(
-        `Overlay ${overlay.id ?? index}: "out" time exceeds project duration`
-      );
-    }
 
     // Destructure to remove in/out and add frame-based timing
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -217,6 +211,16 @@ export function parseProject(content: string): ParsedProject {
       transitionInFrames,
     } as ParsedOverlay;
   });
+
+  // Calculate duration: use explicit duration if provided, otherwise derive from overlays
+  let durationInFrames: number;
+  if (project.project.duration !== undefined) {
+    durationInFrames = parseDuration(project.project.duration, fps);
+  } else if (overlays.length > 0) {
+    durationInFrames = calculateDurationFromOverlays(overlays);
+  } else {
+    throw new ParseError("Project has no overlays and no explicit duration");
+  }
 
   return {
     project: {

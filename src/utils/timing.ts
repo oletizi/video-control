@@ -83,3 +83,15 @@ export function parseDuration(duration: string | number, fps: number): number {
   }
   return parseTimecode(duration, fps);
 }
+
+/**
+ * Calculate total duration from an array of items with outFrame properties
+ */
+export function calculateDurationFromOverlays(
+  overlays: Array<{ outFrame: number }>
+): number {
+  if (overlays.length === 0) {
+    return 0;
+  }
+  return Math.max(...overlays.map((o) => o.outFrame));
+}

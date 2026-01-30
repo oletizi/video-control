@@ -11,7 +11,6 @@ project:
   name: "My Video Overlays"
   resolution: [1920, 1080]
   framerate: 30
-  duration: "1:00"  # 1 minute
 
 # Default settings applied to all overlays
 defaults:

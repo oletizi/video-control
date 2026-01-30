@@ -1,6 +1,7 @@
 import { Composition } from "remotion";
 import { OverlayComposition } from "@/composition/OverlayComposition";
 import type { ParsedProject } from "@/parser/parse";
+import { calculateDurationFromOverlays } from "@/utils/timing";
 
 // Sample project for Remotion Studio preview
 const sampleProject: ParsedProject = {
@@ -91,8 +92,11 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{ project: sampleProject }}
         calculateMetadata={({ props }) => {
           const { project } = props as CompositionProps;
+          const durationInFrames = project.overlays.length > 0
+            ? calculateDurationFromOverlays(project.overlays)
+            : project.project.durationInFrames;
           return {
-            durationInFrames: project.project.durationInFrames,
+            durationInFrames,
             fps: project.project.fps,
             width: project.project.width,
             height: project.project.height,

@@ -130,7 +130,7 @@ export const LowerThird: React.FC<LowerThirdProps> = ({
     transitionFrames,
     transitionIn: parentTransitionIn,
     transitionOut: parentTransitionOut,
-    text: overlay.title ?? overlay.text ?? "",
+    text: overlay.title ?? "",
     fps,
   });
 
@@ -217,7 +217,7 @@ export const LowerThird: React.FC<LowerThirdProps> = ({
     );
   }
 
-  // Legacy mode: text + optional subtitle
+  // Legacy mode: title + optional subtitle
   const typewriter = getTypewriterState({
     frame,
     startFrame: overlay.inFrame,
@@ -225,11 +225,11 @@ export const LowerThird: React.FC<LowerThirdProps> = ({
     transitionFrames,
     transitionIn: parentTransitionIn,
     transitionOut: parentTransitionOut,
-    text: overlay.text ?? "",
+    text: overlay.title ?? "",
     fps,
   });
 
-  const displayText = typewriter ? typewriter.text : (overlay.text ?? "");
+  const displayText = typewriter ? typewriter.text : (overlay.title ?? "");
   const displaySubtitle = overlay.subtitle;
 
   const nameStyle: React.CSSProperties = {

@@ -34,7 +34,7 @@ overlays:
   # Title overlay - centered, fades in
   - id: intro-title
     type: title
-    text: "Welcome"
+    title: "Welcome"
     subtitle: "An Introduction"
     in: "0:01.000"
     out: "0:05.000"
@@ -68,7 +68,7 @@ overlays:
   # Callout with arrow - points to something on screen
   - id: highlight
     type: callout
-    text: "Look here!"
+    title: "Look here!"
     in: "0:15.000"
     out: "0:20.000"
     position: [800, 300]
@@ -78,7 +78,7 @@ overlays:
   # Code block - syntax highlighted
   - id: code-example
     type: code
-    text: |
+    title: |
       function hello(name: string) {
         console.log(\`Hello, \${name}!\`);
       }
@@ -93,7 +93,6 @@ overlays:
     label: "Threshold"
     value: "-18"
     unit: "dB"
-    text: "Threshold: -18 dB"
     in: "0:40.000"
     out: "0:50.000"
     position: [100, 100]

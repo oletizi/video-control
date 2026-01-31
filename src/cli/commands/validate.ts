@@ -37,7 +37,7 @@ export async function validateCommand(projectPath: string): Promise<void> {
     project.overlays.forEach((overlay, i) => {
       const id = overlay.id ?? `#${i + 1}`;
       const frames = `${overlay.inFrame}-${overlay.outFrame}`;
-      const displayText = overlay.title ?? overlay.text ?? "";
+      const displayText = overlay.title ?? "";
       console.log(`  [${overlay.type}] ${id}: "${displayText.slice(0, 30)}${displayText.length > 30 ? "..." : ""}" (frames ${frames})`);
     });
   } catch (err) {

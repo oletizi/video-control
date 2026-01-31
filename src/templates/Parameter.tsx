@@ -27,7 +27,7 @@ export const Parameter: React.FC<ParameterProps> = ({
 
   // Use title as alternative to label
   const displayLabel = overlay.title ?? overlay.label;
-  const mainText = overlay.text ?? `${displayLabel}: ${overlay.value}${overlay.unit ?? ""}`;
+  const mainText = `${displayLabel}: ${overlay.value}${overlay.unit ?? ""}`;
 
   const state = getTransitionState({
     frame,

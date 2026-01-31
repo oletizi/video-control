@@ -58,7 +58,7 @@ theme:
 
 overlays:
   - type: title
-    text: "Welcome"
+    title: "Welcome"
     in: "0:01.000"
     out: "0:05.000"
     style:
@@ -66,8 +66,8 @@ overlays:
       letterSpacing: "0.05em"
 
   - type: lower-third
-    text: "Speaker Name"
-    subtitle: "Title"
+    title: "Speaker Name"
+    subtitle: "Job Title"
     in: "0:06.000"
     out: "0:12.000"
     position: bottom-left
@@ -119,7 +119,7 @@ Centered title text with optional subtitle.
 
 ```yaml
 - type: title
-  text: "Main Title"
+  title: "Main Title"
   subtitle: "Optional subtitle"
   in: "0:01.000"
   out: "0:05.000"
@@ -135,11 +135,11 @@ Name/title bar at bottom of screen.
 
 ```yaml
 - type: lower-third
-  text: "Speaker Name"
+  title: "Speaker Name"
   subtitle: "Role or Title"
   in: "0:06.000"
   out: "0:12.000"
-  position: bottom-left  # or bottom-right
+  position: bottom-left  # bottom-left, bottom-center, bottom-right, top-left, top-center, top-right, center
 ```
 
 ### Callout
@@ -147,7 +147,7 @@ Positioned label with optional arrow pointing to a target.
 
 ```yaml
 - type: callout
-  text: "Look here!"
+  title: "Look here!"
   in: "0:15.000"
   out: "0:20.000"
   position: [800, 300]
@@ -160,7 +160,7 @@ Syntax-highlighted code block using Shiki.
 
 ```yaml
 - type: code
-  text: |
+  title: |
     function example() {
       return "hello";
     }
@@ -179,7 +179,6 @@ Key-value display for measurements or settings.
   label: "Threshold"
   value: "-18"
   unit: "dB"
-  text: "Threshold: -18 dB"
   in: "0:40.000"
   out: "0:50.000"
   position: [100, 100]
@@ -209,7 +208,7 @@ Any overlay can have multiple sections with independent timing. Each section inh
         fontStyle: italic
 ```
 
-All overlay types support an optional `title` field that can be used instead of or in addition to `text`.
+The `title` field is the primary text content for all overlay types. For multi-section overlays, `title` serves as an optional heading above the sections.
 
 ## Custom Styles
 
@@ -217,7 +216,7 @@ Apply any CSS property (camelCase) to overlays or sections:
 
 ```yaml
 - type: title
-  text: "Styled Title"
+  title: "Styled Title"
   in: "0:01.000"
   out: "0:05.000"
   style:

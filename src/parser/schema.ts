@@ -13,8 +13,10 @@ const TimecodeSchema = z.union([z.string(), z.number()]);
  */
 const PositionPresetSchema = z.enum([
   "bottom-left",
+  "bottom-center",
   "bottom-right",
   "top-left",
+  "top-center",
   "top-right",
   "center",
 ]);
@@ -68,7 +70,6 @@ const SectionSchema = z.object({
 const BaseOverlaySchema = z.object({
   id: z.string().optional(),
   title: z.string().optional(),
-  text: z.string().optional(),
   in: TimecodeSchema,
   out: TimecodeSchema,
   position: PositionSchema.optional(),

@@ -10,7 +10,7 @@ import { codeToHtml } from "shiki";
 import { getTransitionState } from "@/transitions";
 import type { ParsedCodeOverlay, ParsedTransition } from "@/parser/parse";
 import type { Theme } from "@/parser/schema";
-import { getPositionStyles, monoFontStyles, defaultFontStyles } from "@/templates/shared";
+import { getPositionStyles, monoFontStyles } from "@/templates/shared";
 
 export interface CodeProps {
   overlay: ParsedCodeOverlay;
@@ -29,7 +29,7 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
   const transitionOut = overlay.transition?.out ?? defaultTransition?.out ?? "fade";
   const transitionFrames = overlay.transitionInFrames;
 
-  const codeText = overlay.text ?? "";
+  const codeText = overlay.title ?? "";
 
   useEffect(() => {
     const loadHighlighting = async () => {
@@ -80,14 +80,6 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
     maxWidth: "80%",
   };
 
-  const titleStyle: React.CSSProperties = {
-    ...defaultFontStyles,
-    fontSize: (overlay.fontSize ?? 18) * 1.2,
-    fontWeight: 600,
-    color: overlay.color ?? theme.text,
-    marginBottom: 12,
-  };
-
   const codeContainerStyle: React.CSSProperties = {
     ...monoFontStyles,
     fontSize: overlay.fontSize ?? 18,
@@ -103,7 +95,6 @@ export const Code: React.FC<CodeProps> = ({ overlay, theme, defaultTransition, d
   return (
     <AbsoluteFill>
       <div style={containerStyle}>
-        {overlay.title && <div style={titleStyle}>{overlay.title}</div>}
         <div
           style={codeContainerStyle}
           dangerouslySetInnerHTML={{ __html: html }}

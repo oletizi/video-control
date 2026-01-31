@@ -27,6 +27,13 @@ export function getPositionStyles(
         left: 80,
         bottom: 80,
       };
+    case "bottom-center":
+      return {
+        position: "absolute",
+        left: "50%",
+        bottom: 80,
+        transform: "translateX(-50%)",
+      };
     case "bottom-right":
       return {
         position: "absolute",
@@ -38,6 +45,13 @@ export function getPositionStyles(
         position: "absolute",
         left: 80,
         top: 80,
+      };
+    case "top-center":
+      return {
+        position: "absolute",
+        left: "50%",
+        top: 80,
+        transform: "translateX(-50%)",
       };
     case "top-right":
       return {

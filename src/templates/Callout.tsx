@@ -20,7 +20,7 @@ export const Callout: React.FC<CalloutProps> = ({ overlay, theme, defaultTransit
   const transitionOut = overlay.transition?.out ?? defaultTransition?.out ?? "fade";
   const transitionFrames = overlay.transitionInFrames;
 
-  const mainText = overlay.title ?? overlay.text ?? "";
+  const mainText = overlay.title ?? "";
 
   const state = getTransitionState({
     frame,

@@ -111,7 +111,7 @@ hooks:
     condition: null
   - extension: spec-governance
     command: speckit.spec-governance.govern-spec
-    enabled: true
+    enabled: false
     optional: false
     prompt: Execute speckit.spec-governance.govern-spec?
     description: 'Govern the clarified spec: cross-model audit-barrage + convergence
@@ -134,7 +134,7 @@ hooks:
     condition: null
   - extension: spec-governance
     command: speckit.spec-governance.govern-spec
-    enabled: true
+    enabled: false
     optional: true
     prompt: Execute speckit.spec-governance.govern-spec?
     description: Govern the spec+plan after planning (optional)

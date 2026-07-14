@@ -9,3 +9,6 @@ package-lock.json
 # Ignore projects directory
 /projects/
 /.idea/
+
+# stack-control transient session state (front-door markers, etc.)
+/.stack-control/state/

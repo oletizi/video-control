@@ -25,7 +25,9 @@ graph (it fails loud on a cycle / dangling ref / duplicate id).
 A build system for repeatable video production in DaVinci Resolve: agent-driven, repository-based automation harness (CLI + declarative YAML workflows + structured inspection/validation + reusable templates). Opinionated over exhaustive; local, no persistent service. First cycle: macOS-first, already-running Resolve instance, human review before final render.
 
 ## design:feature/technical-discovery
-- status: planned
+- status: in-flight
+- design-approved: yes
+- design: docs/superpowers/specs/2026-07-14-technical-discovery-design.md
 - part-of: multi:feature/resolve-automation-harness
 - ref: docs/product-brief-resolve-harness.md
 Phase 0 go/no-go feasibility: map Resolve scripting API coverage (projects/media/timelines/clips/markers/subtitles/Fusion/render), free vs Studio, stable-identifier & snapshot/rollback strategy, GUI-fallback surface. Deliverables: capability matrix, architecture proposal, API risk register, prototype doctor/inspect/render-queue. Exit: reliable connection, structured inspection, test timeline created, test render enqueued+completed, documented limits.

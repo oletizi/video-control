@@ -12,3 +12,7 @@ package-lock.json
 
 # stack-control transient session state (front-door markers, etc.)
 /.stack-control/state/
+
+# spike-generated media (not committed)
+/spike/fixtures/media/*
+!/spike/fixtures/media/.gitkeep

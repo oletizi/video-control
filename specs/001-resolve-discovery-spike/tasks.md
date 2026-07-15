@@ -103,9 +103,15 @@
 
 ## Phase 12: Polish & Acceptance
 
-- [ ] T023 [tier:balanced] Run the full quickstart end-to-end against a running Resolve and record the actual outputs (all probes + `decision.py`)
-- [ ] T024 [P] [tier:balanced] Verify the quickstart SC acceptance checklist (SC-001..SC-011) — especially SC-005 (doctor/render fail fast, exit 2, no hang when Resolve closed), SC-006 (`git status` clean outside `spike/`+`specs/`), SC-010 (provenance on every `raw/*.json`)
-- [ ] T025 [P] [tier:balanced] Fill `spike/README.md` with the confirmed working interpreter + the enable-external-scripting steps discovered during T023 (hand these to M1 as constraints)
+> **Operator-run (`- [~]`):** T023–T025 require a **live Resolve** (running + external
+> scripting enabled + Studio edition) that a coding agent cannot set up in-session. They
+> are marked `- [~]` so the `tasks-complete` gate excludes them (audit-before-acceptance):
+> execute governs the written code now, and the operator runs the quickstart to produce
+> the actual go/no-go evidence.
+
+- [~] T023 [tier:balanced] Run the full quickstart end-to-end against a running Resolve and record the actual outputs (all probes + `decision.py`)
+- [~] T024 [P] [tier:balanced] Verify the quickstart SC acceptance checklist (SC-001..SC-011) — especially SC-005 (doctor/render fail fast, exit 2, no hang when Resolve closed), SC-006 (`git status` clean outside `spike/`+`specs/`), SC-010 (provenance on every `raw/*.json`)
+- [~] T025 [P] [tier:balanced] Fill `spike/README.md` with the confirmed working interpreter + the enable-external-scripting steps discovered during T023 (hand these to M1 as constraints)
 
 ---
 

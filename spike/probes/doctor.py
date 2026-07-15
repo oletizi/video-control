@@ -357,9 +357,13 @@ def run(runs: int) -> tuple[int, dict]:
         findings = _build_findings(
             attempts, worker, connected, None, edition_value, reliability, closed_probe
         )
+        # cannot-run is UNTESTED evidence, NOT an observed failure: a probe that
+        # could not connect gathered no gate evidence. Writing SKIPPED (not FAIL)
+        # keeps this consistent with the other 7 probes and prevents decision.py
+        # from fabricating a NO-GO from a "Resolve not running" condition (FR-016).
         provenance = evidence.build_provenance(
             probe=PROBE_NAME,
-            result=evidence.ProbeOutcome.FAIL,
+            result=evidence.ProbeOutcome.SKIPPED,
             resolve_version=version,
             resolve_edition=edition_value,
         )
@@ -367,12 +371,12 @@ def run(runs: int) -> tuple[int, dict]:
             evidence.finding(
                 id="doctor.diagnosis",
                 statement="Fail-fast diagnosis for the unreachable/cannot-run case.",
-                strength=evidence.EvidenceStrength.OBSERVED_FAIL,
+                strength=evidence.EvidenceStrength.NOT_FOUND,
                 evidence=diagnosis,
             )
         )
         out_path = evidence.write_probe_result(
-            PROBE_NAME, provenance, findings, evidence.ProbeOutcome.FAIL
+            PROBE_NAME, provenance, findings, evidence.ProbeOutcome.SKIPPED
         )
         report = {
             "provenance": provenance,

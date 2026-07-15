@@ -9,3 +9,22 @@ package-lock.json
 # Ignore projects directory
 /projects/
 /.idea/
+
+# stack-control transient session state (front-door markers, etc.)
+/.stack-control/state/
+
+# spike-generated media (not committed)
+/spike/fixtures/media/*
+!/spike/fixtures/media/.gitkeep
+
+# Python byproducts
+__pycache__/
+*.pyc
+
+# spike evidence outputs (regenerated per run; the operator commits real ones if desired)
+/spike/findings/raw/*.json
+/spike/findings/*.md
+
+# stack-control transient run artifacts (govern background logs, audit-barrage run dirs)
+/.stack-control/govern/
+/.stack-control/audit-runs/

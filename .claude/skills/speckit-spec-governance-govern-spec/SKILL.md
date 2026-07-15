@@ -1,0 +1,1 @@
+../../../.specify/extensions/spec-governance/.specify-dev/agent-commands/claude/speckit-spec-governance-govern-spec/SKILL.md

@@ -1,4 +1,6 @@
 <!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+Active feature: Resolve Discovery Spike (Phase 0 feasibility).
+For technologies, project structure, and run commands, read the current plan:
+`specs/001-resolve-discovery-spike/plan.md` (spec, research, data-model,
+contracts, and quickstart are siblings in that directory).
 <!-- SPECKIT END -->

@@ -1,0 +1,42 @@
+[
+  {
+    "operation": "media import",
+    "why": "MVP foundation: external content must be imported into the media pool before any timeline work begins"
+  },
+  {
+    "operation": "timeline creation",
+    "why": "MVP foundation: cannot place clips or add markers without creating a timeline first"
+  },
+  {
+    "operation": "clip placement / trim",
+    "why": "MVP foundation: core editing operation to assemble video segments on the timeline"
+  },
+  {
+    "operation": "marker creation",
+    "why": "MVP foundation: markers enable navigation and synchronization points for downstream operations"
+  },
+  {
+    "operation": "subtitle import",
+    "why": "MVP engagement feature: captions from transcripts are essential for accessibility and viewer comprehension"
+  },
+  {
+    "operation": "silence detection / pause reduction",
+    "why": "MVP editing feature: automatic removal of dead air significantly improves video pacing and reduces runtime"
+  },
+  {
+    "operation": "intro/outro insertion",
+    "why": "MVP branding feature: standardized opening/closing sequences create consistent visual identity across videos"
+  },
+  {
+    "operation": "Fusion title-template insertion",
+    "why": "MVP branding feature: DaVinci Fusion templates (lower thirds, text overlays) are industry-standard for polish and professionalism"
+  },
+  {
+    "operation": "chapter markers from configuration",
+    "why": "MVP organization feature: programmatic chapter insertion enables structured navigation for long-form video"
+  },
+  {
+    "operation": "multi-format render",
+    "why": "MVP delivery feature: rendering multiple formats (review + final) supports both review workflow and platform-specific distribution"
+  }
+]

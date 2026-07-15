@@ -1,0 +1,11 @@
+{
+  "project": "Resolve Spike Fixture",
+  "timeline": "Spike Timeline",
+  "tracks": { "video": 2, "audio": 2 },
+  "clips": [
+    { "name": "fixture-video.mov", "track": "V1" },
+    { "name": "fixture-tone.wav",  "track": "A1" }
+  ],
+  "markers": [ { "frame": 48, "name": "Spike Marker" } ],
+  "offline_media": [ "intentionally-missing.mov" ]
+}

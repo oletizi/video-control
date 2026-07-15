@@ -16,3 +16,7 @@ package-lock.json
 # spike-generated media (not committed)
 /spike/fixtures/media/*
 !/spike/fixtures/media/.gitkeep
+
+# Python byproducts
+__pycache__/
+*.pyc

@@ -32,7 +32,7 @@ file; specs recorded in a sidecar.
 
 ```bash
 python spike/probes/doctor.py --runs 10          # US1 — MUST pass first (gates the rest)
-python spike/probes/inspect.py                   # US2 — diffs live state vs fixture manifest
+python spike/probes/inspect_probe.py             # US2 — diffs live state vs fixture manifest
 python spike/probes/build.py --runs 2            # US3 — build + idempotency observation
 python spike/probes/render.py --timeout 300 --poll 2 --stall 60   # US4
 python spike/probes/identity.py --reload         # US5

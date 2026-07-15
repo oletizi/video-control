@@ -96,7 +96,7 @@ spike/                              # throwaway; the ONLY tree this feature writ
 ├── decision.py                     # applies the Decision Policy → GO/NARROW/NO-GO
 ├── probes/
 │   ├── doctor.py                   # US1  — connection (multi-run), version, edition, interpreter
-│   ├── inspect.py                  # US2  — project/timeline → JSON, diffed vs fixture
+│   ├── inspect_probe.py            # US2  — project/timeline → JSON, diffed vs fixture
 │   ├── build.py                    # US3  — create timeline, import, place clip, marker
 │   ├── render.py                   # US4  — enqueue + wait w/ timeout/stall semantics
 │   ├── identity.py                 # US5  — stable-identifier probe

@@ -44,9 +44,9 @@
 ## Phase 4: User Story 2 — inspect (Priority: P1)
 
 **Goal**: structured project/timeline state, machine-diffed vs the fixture.
-**Independent test**: `python spike/probes/inspect.py` reports 0 unexplained diffs on the fixture.
+**Independent test**: `python spike/probes/inspect_probe.py` reports 0 unexplained diffs on the fixture.
 
-- [ ] T011 [US2] [tier:balanced] Implement `spike/probes/inspect.py`: serialize project/timeline/tracks/clips/markers/media-pool/settings + missing media to JSON (research R4, FR-004)
+- [ ] T011 [US2] [tier:balanced] Implement `spike/probes/inspect_probe.py` (renamed from `inspect.py` to avoid shadowing the stdlib `inspect` module): serialize project/timeline/tracks/clips/markers/media-pool/settings + missing media to JSON (research R4, FR-004)
 - [ ] T012 [US2] [tier:balanced] Add automatic diff of inspect output vs `expected_manifest.json`, reporting matches + unexplained differences (0 unexplained = PASS, SC-008); apply the probe CLI contract + `raw/inspect.json`
 
 ## Phase 5: User Story 3 — build (Priority: P2)

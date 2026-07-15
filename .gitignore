@@ -20,3 +20,7 @@ package-lock.json
 # Python byproducts
 __pycache__/
 *.pyc
+
+# spike evidence outputs (regenerated per run; the operator commits real ones if desired)
+/spike/findings/raw/*.json
+/spike/findings/*.md

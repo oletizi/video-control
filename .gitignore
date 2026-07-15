@@ -24,3 +24,7 @@ __pycache__/
 # spike evidence outputs (regenerated per run; the operator commits real ones if desired)
 /spike/findings/raw/*.json
 /spike/findings/*.md
+
+# stack-control transient run artifacts (govern background logs, audit-barrage run dirs)
+/.stack-control/govern/
+/.stack-control/audit-runs/

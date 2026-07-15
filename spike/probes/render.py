@@ -26,35 +26,30 @@ Design constraints:
   - Every Resolve API call is guarded (native calls can raise, return None,
     or return falsy sentinels) — nothing here may crash out or hang the
     operator, even against a live app in an unexpected state.
+
+The guarded-call helper, the preset-load/render-settings/enqueue steps, the
+FR-006 timeout/stall poll loop, and output-file confirmation all live in
+``render_support.py`` (pure functions over resolve/project/job arguments);
+this file is the CLI entrypoint and top-level orchestration.
 """
 
 from __future__ import annotations
 
-import argparse
 import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 # --------------------------------------------------------------------------- #
-# Make sibling spike modules (resolve_env, evidence) importable regardless of
-# the caller's CWD, per the probe contract ("Add spike/ to sys.path").
+# Make sibling spike modules (resolve_env, evidence, render_support)
+# importable regardless of the caller's CWD, per the probe contract ("Add
+# spike/ to sys.path").
 # --------------------------------------------------------------------------- #
 _SCRIPT_DIR = Path(__file__).resolve().parent  # spike/probes/
 _SPIKE_ROOT = _SCRIPT_DIR.parent  # spike/
 if str(_SPIKE_ROOT) not in sys.path:
     sys.path.insert(0, str(_SPIKE_ROOT))
-
-# CPython auto-inserts the running script's own directory (spike/probes/) at
-# sys.path[0]. This probe needs nothing from spike/probes/ itself (only
-# spike/ for resolve_env + evidence above), and a sibling probe module can
-# collide with a stdlib module name (e.g. a `spike/probes/inspect.py` probe
-# shadowing the stdlib `inspect` module that argparse's help formatting
-# imports lazily on newer Pythons) — so drop it rather than risk an import
-# collision that would crash this probe before it ever reaches Resolve.
-_script_dir_str = str(_SCRIPT_DIR)
-sys.path[:] = [p for p in sys.path if p != _script_dir_str]
 
 import resolve_env  # noqa: E402
 from evidence import (  # noqa: E402
@@ -67,56 +62,30 @@ from evidence import (  # noqa: E402
     write_probe_result,
 )
 
+# render_support.py is this probe's own sibling module in spike/probes/ (the
+# script's own directory, which CPython auto-inserts at sys.path[0] before
+# this file starts running) — import it now, before the strip below removes
+# that directory from sys.path.
+import render_support as rs  # noqa: E402
+import argparse  # noqa: E402
+
+# CPython auto-inserts the running script's own directory (spike/probes/) at
+# sys.path[0]. Everything this probe needs FROM that directory (render_support,
+# just imported above) is now safely in sys.modules, so drop the directory
+# from sys.path rather than leave it in place for the rest of this process's
+# lifetime: a sibling probe module can collide with a stdlib module name (e.g.
+# a `spike/probes/inspect.py` probe shadowing the stdlib `inspect` module that
+# argparse's help formatting imports lazily on newer Pythons), and that lazy
+# import happens later, inside _parse_args() below — so this drop still needs
+# to happen before then, and it does (module load time, before main() runs).
+_script_dir_str = str(_SCRIPT_DIR)
+sys.path[:] = [p for p in sys.path if p != _script_dir_str]
+
 PROBE_NAME = "render"
 
 DEFAULT_TIMEOUT_S = 300.0
 DEFAULT_POLL_S = 2.0
 DEFAULT_STALL_S = 60.0
-
-# Minimum sleep floor so a caller-supplied --poll of 0 (or negative) cannot
-# turn the poll loop into a tight busy-spin.
-_MIN_POLL_SLEEP_S = 0.05
-
-# JobStatus strings the Resolve render API is documented to report once a job
-# leaves the active "Rendering" state.
-_TERMINAL_STATUSES = frozenset({"Complete", "Cancelled", "Failed"})
-
-
-# --------------------------------------------------------------------------- #
-# Guarded API-call helper
-# --------------------------------------------------------------------------- #
-
-
-def _guarded_call(func: Callable[..., Any], *args: Any, **kwargs: Any) -> tuple[Any, Optional[str]]:
-    """Call a Resolve API method, catching ANY exception it raises.
-
-    The scripting API is an opaque native binding — a call can raise, block
-    briefly, or simply return None/False on failure. Every touchpoint in this
-    probe goes through this helper so a single unexpected native error can
-    never crash the probe or leave it in an unguarded state.
-
-    Returns ``(value, error)`` where ``error`` is ``None`` on success.
-    """
-    try:
-        return func(*args, **kwargs), None
-    except Exception as exc:  # noqa: BLE001 - deliberately broad: guarding an opaque native API
-        return None, "%s: %s" % (type(exc).__name__, exc)
-
-
-def _preset_name(entry: Any) -> Optional[str]:
-    """Best-effort extraction of a preset name from a GetRenderPresetList() entry.
-
-    The documented shape varies by Resolve version (plain strings vs. dicts
-    with a name-like key); this stays tolerant rather than assuming one shape.
-    """
-    if isinstance(entry, str):
-        return entry
-    if isinstance(entry, dict):
-        for key in ("PresetName", "Name", "name"):
-            value = entry.get(key)
-            if isinstance(value, str) and value:
-                return value
-    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -220,6 +189,25 @@ def _cannot_run(reason: str, findings: list[dict[str, Any]]) -> int:
     )
 
 
+def _fail(
+    findings: list[dict[str, Any]],
+    step_findings: list[dict[str, Any]],
+    fail_summary: str,
+    *,
+    resolve_version: str,
+    resolve_edition: Optional[dict[str, Any]],
+) -> int:
+    """Append a failed step's findings and emit the standard FAIL result."""
+    findings.extend(step_findings)
+    return _emit(
+        ProbeOutcome.FAIL,
+        findings,
+        resolve_version=resolve_version,
+        resolve_edition=resolve_edition,
+        summary=f"FAIL: {fail_summary}",
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Main probe logic
 # --------------------------------------------------------------------------- #
@@ -234,19 +222,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     if resolve is None:
         return _cannot_run(resolve_env.diagnose_connection_failure(), findings)
 
-    resolve_version, _ = _guarded_call(resolve.GetVersionString)
+    resolve_version, _ = rs.guarded_call(resolve.GetVersionString)
     resolve_version = resolve_version or "unknown"
     resolve_edition = edition(
         "Studio", Confidence.INFERRED, "external scripting connection succeeded"
     )
 
-    project_manager, err = _guarded_call(resolve.GetProjectManager)
+    project_manager, err = rs.guarded_call(resolve.GetProjectManager)
     if err or project_manager is None:
         return _cannot_run(
             err or "GetProjectManager() returned None", findings
         )
 
-    project, err = _guarded_call(project_manager.GetCurrentProject)
+    project, err = rs.guarded_call(project_manager.GetCurrentProject)
     if err or project is None:
         return _cannot_run(
             err or "GetCurrentProject() returned None (no project open in Resolve)",
@@ -254,297 +242,71 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # --- T015: load preset, set render settings, enqueue, start ----------- #
-    preset_list, err = _guarded_call(project.GetRenderPresetList)
-    if err:
-        findings.append(
-            finding(
-                id="render.preset_list",
-                statement="GetRenderPresetList() raised an exception.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=err,
-            )
+    preset_step = rs.load_preset(project, args.preset)
+    if preset_step.fail_summary is not None:
+        return _fail(
+            findings, preset_step.findings, preset_step.fail_summary,
+            resolve_version=resolve_version, resolve_edition=resolve_edition,
         )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary=f"FAIL: {err}",
-        )
-
-    preset_name = args.preset
-    if preset_name is None:
-        candidates = preset_list if isinstance(preset_list, list) else []
-        for entry in candidates:
-            preset_name = _preset_name(entry)
-            if preset_name:
-                break
-
-    if not preset_name:
-        findings.append(
-            finding(
-                id="render.preset_list",
-                statement="No render preset available to load.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=f"--preset not supplied and GetRenderPresetList() returned {preset_list!r}",
-            )
-        )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary="FAIL: no render preset available (supply --preset or define one in Resolve).",
-        )
-
-    loaded, err = _guarded_call(project.LoadRenderPreset, preset_name)
-    if err or not loaded:
-        findings.append(
-            finding(
-                id="render.preset_load",
-                statement=f"LoadRenderPreset({preset_name!r}) did not succeed.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=err or f"LoadRenderPreset returned {loaded!r}",
-            )
-        )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary=f"FAIL: could not load render preset {preset_name!r}.",
-        )
-    findings.append(
-        finding(
-            id="render.preset_load",
-            statement=f"LoadRenderPreset({preset_name!r}) succeeded.",
-            strength=EvidenceStrength.OBSERVED_PASS,
-            evidence="LoadRenderPreset returned a truthy result.",
-        )
-    )
+    findings.extend(preset_step.findings)
 
     out_dir = args.out or tempfile.mkdtemp(prefix="resolve-render-probe-")
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     custom_name = "render_probe_%d" % int(time.time())
 
-    render_settings = {"TargetDir": out_dir, "CustomName": custom_name}
-    _settings_result, err = _guarded_call(project.SetRenderSettings, render_settings)
-    if err:
-        findings.append(
-            finding(
-                id="render.settings",
-                statement="SetRenderSettings() raised an exception.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=err,
-            )
+    settings_step = rs.apply_render_settings(project, out_dir, custom_name)
+    if settings_step.fail_summary is not None:
+        return _fail(
+            findings, settings_step.findings, settings_step.fail_summary,
+            resolve_version=resolve_version, resolve_edition=resolve_edition,
         )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary=f"FAIL: {err}",
-        )
-    findings.append(
-        finding(
-            id="render.settings",
-            statement=f"SetRenderSettings(TargetDir={out_dir!r}, CustomName={custom_name!r}) applied without error.",
-            strength=EvidenceStrength.OBSERVED_PASS,
-            evidence="SetRenderSettings raised no exception.",
-        )
-    )
+    findings.extend(settings_step.findings)
 
-    job_id, err = _guarded_call(project.AddRenderJob)
-    if err or not job_id:
-        findings.append(
-            finding(
-                id="render.enqueue",
-                statement="AddRenderJob() did not return a usable job id.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=err or f"AddRenderJob returned {job_id!r}",
-            )
+    enqueue_step = rs.enqueue_render_job(project)
+    if enqueue_step.fail_summary is not None:
+        return _fail(
+            findings, enqueue_step.findings, enqueue_step.fail_summary,
+            resolve_version=resolve_version, resolve_edition=resolve_edition,
         )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary="FAIL: AddRenderJob() did not enqueue a job.",
-        )
-    findings.append(
-        finding(
-            id="render.enqueue",
-            statement=f"AddRenderJob() enqueued job {job_id!r}.",
-            strength=EvidenceStrength.OBSERVED_PASS,
-            evidence="AddRenderJob returned a job id.",
-        )
-    )
+    findings.extend(enqueue_step.findings)
+    job_id = enqueue_step.value
 
-    started, err = _guarded_call(project.StartRendering, job_id)
-    if err or started is False:
-        findings.append(
-            finding(
-                id="render.start",
-                statement=f"StartRendering({job_id!r}) did not start the job.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=err or f"StartRendering returned {started!r}",
-            )
+    start_step = rs.start_rendering(project, job_id)
+    if start_step.fail_summary is not None:
+        return _fail(
+            findings, start_step.findings, start_step.fail_summary,
+            resolve_version=resolve_version, resolve_edition=resolve_edition,
         )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary=f"FAIL: could not start render job {job_id!r}.",
-        )
-    findings.append(
-        finding(
-            id="render.start",
-            statement=f"StartRendering({job_id!r}) started without error.",
-            strength=EvidenceStrength.OBSERVED_PASS,
-            evidence="StartRendering raised no exception and did not return False.",
-        )
-    )
+    findings.extend(start_step.findings)
 
     # --- T016: explicit timeout/stall poll loop (FR-006) ------------------- #
     timeout_s = max(0.0, args.timeout)
     stall_s = max(0.0, args.stall)
-    poll_s = max(_MIN_POLL_SLEEP_S, args.poll)
+    poll_s = max(rs.MIN_POLL_SLEEP_S, args.poll)
 
-    start_time = time.monotonic()
-    last_progress_time = start_time
-    last_status: Optional[str] = None
-    last_percentage: Optional[float] = None
-    outcome_kind: Optional[str] = None  # "completed" | "timeout" | "stall" | "poll-error" | "terminal-non-complete"
-    poll_error: Optional[str] = None
-
-    while True:
-        now = time.monotonic()
-        elapsed = now - start_time
-
-        if elapsed > timeout_s:
-            outcome_kind = "timeout"
-            break
-
-        status, err = _guarded_call(project.GetRenderJobStatus, job_id)
-        if err:
-            outcome_kind = "poll-error"
-            poll_error = err
-            break
-        status = status if isinstance(status, dict) else {}
-
-        job_status = status.get("JobStatus")
-        if job_status is not None:
-            last_status = job_status
-        percentage = status.get("CompletionPercentage")
-        if percentage is not None:
-            if last_percentage is None or percentage != last_percentage:
-                last_percentage = percentage
-                last_progress_time = now
-
-        if (now - last_progress_time) > stall_s:
-            outcome_kind = "stall"
-            break
-
-        if job_status in _TERMINAL_STATUSES:
-            outcome_kind = "completed" if job_status == "Complete" else "terminal-non-complete"
-            break
-
-        time.sleep(poll_s)
-
-    elapsed_final = time.monotonic() - start_time
+    poll_result = rs.poll_render_job(project, job_id, timeout_s, stall_s, poll_s)
 
     # --- Breach handling: timeout / stall / poll-error / non-complete ------ #
-    if outcome_kind in ("timeout", "stall", "poll-error", "terminal-non-complete"):
-        _stop_result, stop_err = _guarded_call(project.StopRendering)
-        stop_note = (
-            f"StopRendering() raised: {stop_err}" if stop_err else "StopRendering() attempted, no exception raised."
-        )
-        detail = poll_error if outcome_kind == "poll-error" else stop_note
-        findings.append(
-            finding(
-                id=f"render.{outcome_kind.replace('-', '_')}",
-                statement=(
-                    f"Render job {job_id!r} did not complete cleanly ({outcome_kind}) "
-                    f"after {elapsed_final:.1f}s; last JobStatus={last_status!r}, "
-                    f"last CompletionPercentage={last_percentage!r}."
-                ),
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=detail,
-            )
-        )
+    if poll_result.outcome_kind in ("timeout", "stall", "poll-error", "terminal-non-complete"):
+        breach_findings, summary = rs.handle_breach(project, job_id, poll_result)
+        findings.extend(breach_findings)
         return _emit(
             ProbeOutcome.FAIL,
             findings,
             resolve_version=resolve_version,
             resolve_edition=resolve_edition,
-            summary=(
-                f"FAIL ({outcome_kind}): last JobStatus={last_status}, "
-                f"last CompletionPercentage={last_percentage}, elapsed={elapsed_final:.1f}s."
-            ),
+            summary=summary,
         )
 
     # --- Completed: confirm output file exists with non-zero size --------- #
-    out_path_obj = Path(out_dir)
-    all_files = [p for p in out_path_obj.iterdir() if p.is_file()]
-    matched = [p for p in all_files if p.name.startswith(custom_name)]
-    candidates = matched if matched else all_files
-
-    if not candidates:
-        findings.append(
-            finding(
-                id="render.output_missing",
-                statement=f"Render job {job_id!r} reported Complete, but no output file was found in {out_dir!r}.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=f"CustomName prefix={custom_name!r}; directory listing={[p.name for p in all_files]!r}",
-            )
-        )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary=f"FAIL: job reported Complete but no output file found in {out_dir}.",
-        )
-
-    nonzero = [p for p in candidates if p.stat().st_size > 0]
-    if not nonzero:
-        findings.append(
-            finding(
-                id="render.output_empty",
-                statement=f"Output file(s) found for job {job_id!r}, but all are zero bytes.",
-                strength=EvidenceStrength.OBSERVED_FAIL,
-                evidence=f"files={[str(p) for p in candidates]!r}",
-            )
-        )
-        return _emit(
-            ProbeOutcome.FAIL,
-            findings,
-            resolve_version=resolve_version,
-            resolve_edition=resolve_edition,
-            summary="FAIL: output file(s) present but zero bytes.",
-        )
-
-    findings.append(
-        finding(
-            id="render.completed",
-            statement=(
-                f"Render job {job_id!r} completed within timeout ({elapsed_final:.1f}s / {timeout_s}s budget); "
-                f"output file(s) confirmed present with non-zero size."
-            ),
-            strength=EvidenceStrength.OBSERVED_PASS,
-            evidence=f"files={[str(p) for p in nonzero]!r}",
-        )
-    )
+    confirmation = rs.confirm_output(job_id, out_dir, custom_name, poll_result.elapsed_final, timeout_s)
+    findings.extend(confirmation.findings)
     return _emit(
-        ProbeOutcome.PASS,
+        ProbeOutcome.PASS if confirmation.kind == "ok" else ProbeOutcome.FAIL,
         findings,
         resolve_version=resolve_version,
         resolve_edition=resolve_edition,
-        summary=(
-            f"PASS: render job {job_id} completed in {elapsed_final:.1f}s; "
-            f"output confirmed at {[str(p) for p in nonzero]}."
-        ),
+        summary=confirmation.summary,
     )
 
 

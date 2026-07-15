@@ -26,6 +26,7 @@ A build system for repeatable video production in DaVinci Resolve: agent-driven,
 
 ## design:feature/technical-discovery
 - status: in-flight
+- analyze-clean: yes
 - spec: specs/001-resolve-discovery-spike
 - design-approved: yes
 - design: docs/superpowers/specs/2026-07-14-technical-discovery-design.md
